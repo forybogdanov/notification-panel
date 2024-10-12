@@ -15,20 +15,29 @@ import {
 } from "@radix-ui/themes";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Notification, NotificationType } from "@/types/notification";
 import { CreateNotificationButton } from "@/components/Form";
+import NotificationCard from "@/components/NotificationCard";
+import { INotification, NotificationType } from "@/types/notification";
 
-const exampleNotifications: Notification[] = [
+const exampleNotifications: INotification[] = [
   {
-    title: "Notification 1",
-    description: "This is the first notification",
     type: NotificationType.PLATFORM_UPDATE,
+    avatar_link: "",
+    read: false,
+    personName: null,
+    releaseNumber: null,
+    update: "New feature release",
+    createdAt: new Date(),
   },
   {
-    title: "Notification 2",
-    description: "This is the second notification",
     type: NotificationType.COMMENT_TAG,
-  },
+    avatar_link: "",
+    read: false,
+    personName: "John Doe",
+    releaseNumber: null,
+    update: null,
+    createdAt: new Date(),
+  }
 ];
 
 export default function Home() {
@@ -55,16 +64,16 @@ export default function Home() {
               </Button>
             </Popover.Trigger>
             <Popover.Content width="360px">
-              <Flex direction="row" justify="between" align="center">
-                <Text>{notifications.length} unread notifications</Text>
-                <CreateNotificationButton />
-              </Flex>
               <Flex direction="column" gap="2">
-                {notifications.map((notification) => (
-                  <Flex direction="row" gap="2" key={`key-${notification.title}`}>
-                    <Text>{notification.title}</Text>
-                  </Flex>
-                ))}
+                <Flex direction="row" justify="between" align="center">
+                  <Text>{notifications.length} unread notifications</Text>
+                  <CreateNotificationButton />
+                </Flex>
+                <Flex direction="column" gap="2">
+                  {notifications.map((notification, index) => (
+                    <NotificationCard key={`notification-${index}`} notification={notification} />
+                  ))}
+                </Flex>
               </Flex>
             </Popover.Content>
           </Popover.Root>
