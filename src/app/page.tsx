@@ -1,20 +1,14 @@
 "use client";
 
-import { BellIcon, PlusIcon } from "@radix-ui/react-icons";
+import { BellIcon } from "@radix-ui/react-icons";
 import {
-  Box,
   Button,
-  Container,
-  Dialog,
   Flex,
   Grid,
   Popover,
-  Select,
   Text,
-  TextField,
 } from "@radix-ui/themes";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useState } from "react";
 import { CreateNotificationButton } from "@/components/Form";
 import NotificationCard from "@/components/NotificationCard";
 import { INotification, NotificationType } from "@/types/notification";
@@ -43,7 +37,11 @@ const exampleNotifications: INotification[] = [
 export default function Home() {
   const [openNotificationsDropdown, setOpenNotificationsDropdown] =
     useState(false);
-  const [notifications, setNotifications] = useState(exampleNotifications);
+  const [notifications, setNotifications] = useState<INotification[]>([]);
+
+  useEffect(() => {
+    setNotifications(exampleNotifications);
+  }, []);
 
   return (
     <Grid

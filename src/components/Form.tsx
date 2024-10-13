@@ -1,5 +1,5 @@
 "use client";
-import { INotification, NotificationType } from "@/types/notification";
+import { NotificationType } from "@/types/notification";
 import { PlusIcon } from "@radix-ui/react-icons";
 import {
   Flex,
@@ -40,7 +40,6 @@ export const CreateNotificationButton = () => {
     setValue: setValuePlatform,
     formState: { errors: errorsPlatform },
     register: registerPlatform,
-    getValues: getValuesPlatform,
   } = useForm<INotificationPlatformUpdateForm>({
     defaultValues: defaultValuesPlatformUpdate,
   });
@@ -49,7 +48,6 @@ export const CreateNotificationButton = () => {
     setValue: setValueOthers,
     formState: { errors: errorsOthers },
     register: registerOthers,
-    getValues: getValuesOthers,
   } = useForm<INotificationOthersForm>({ defaultValues: defaultValuesOthers });
 
   useEffect(() => {
