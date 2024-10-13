@@ -1,4 +1,5 @@
 "use client";
+import { notificationService } from "@/services/notification.service";
 import { NotificationType } from "@/types/notification";
 import { PlusIcon } from "@radix-ui/react-icons";
 import {
@@ -8,12 +9,12 @@ import {
   Dialog,
   Button,
   TextField,
+  Spinner,
 } from "@radix-ui/themes";
 import { Fragment, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 interface INotificationPlatformUpdateForm {
-  avatarLink: string;
   releaseNumber: string;
   update: string;
 }
@@ -24,7 +25,6 @@ interface INotificationOthersForm {
 }
 
 const defaultValuesPlatformUpdate: INotificationPlatformUpdateForm = {
-  avatarLink: "",
   releaseNumber: "",
   update: "",
 };
@@ -34,8 +34,9 @@ const defaultValuesOthers: INotificationOthersForm = {
   personName: "",
 };
 
-export const CreateNotificationButton = () => {
+export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {open: boolean, setOpen: (open: boolean) => void, fetchNotifications: () => void}) => {
   const {
+    reset: resetPlatform,
     handleSubmit: handleSubmitPlatform,
     setValue: setValuePlatform,
     formState: { errors: errorsPlatform },
@@ -44,18 +45,22 @@ export const CreateNotificationButton = () => {
     defaultValues: defaultValuesPlatformUpdate,
   });
   const {
+    reset: resetOthers,
     handleSubmit: handleSubmitOthers,
     setValue: setValueOthers,
     formState: { errors: errorsOthers },
     register: registerOthers,
   } = useForm<INotificationOthersForm>({ defaultValues: defaultValuesOthers });
+  const [type, setType] = useState<NotificationType>(
+    NotificationType.PLATFORM_UPDATE,
+  );
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     registerPlatform("update", {
       required: "Update is required",
       minLength: 5,
     });
-    registerPlatform("avatarLink", { required: "Avatar link is required" });
     registerPlatform("releaseNumber", {
       required: "Release number is required",
     });
@@ -63,22 +68,36 @@ export const CreateNotificationButton = () => {
       required: "Your name is required",
       minLength: 2,
     });
-    registerOthers("avatarLink", { required: "Avatar link is required" });
   }, [registerPlatform, registerOthers]);
 
-  const onSubmitPlatform: SubmitHandler<INotificationPlatformUpdateForm> = (
+  const onSubmitPlatform: SubmitHandler<INotificationPlatformUpdateForm> = async (
     data,
-  ) => console.log("submit platform", data);
-  const onSubmitOthers: SubmitHandler<INotificationOthersForm> = (data) =>
-    console.log("submit others", data);
-  const [type, setType] = useState<NotificationType>(
-    NotificationType.PLATFORM_UPDATE,
-  );
+  ) => {
+    await createNotification({ ...data, type });
+  };
+  const onSubmitOthers: SubmitHandler<INotificationOthersForm> = async (data) => {
+    await createNotification({ ...data, type });
+  }
+
+  const resetForms = () => {
+    resetPlatform();
+    resetOthers();
+  }
+
+  const createNotification = async (data: any) => {
+    setLoading(true);
+    await notificationService.create({ ...data, type });
+    setLoading(false);
+    setOpen(false);
+    fetchNotifications();
+    resetForms();
+  }
+  
 
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open}>
       <Dialog.Trigger>
-        <Button>
+        <Button onClick={() => setOpen(true)}>
           <PlusIcon />
         </Button>
       </Dialog.Trigger>
@@ -119,6 +138,7 @@ export const CreateNotificationButton = () => {
                   Release number
                 </Text>
                 <TextField.Root
+                  type="number"
                   onChange={(e) =>
                     setValuePlatform("releaseNumber", e.target.value)
                   }
@@ -144,16 +164,6 @@ export const CreateNotificationButton = () => {
                   <Text color="red">Update is required</Text>
                 )}
               </label>
-              <label>
-                <Text>Avatar link</Text>
-                <TextField.Root
-                  onChange={(e) =>
-                    setValuePlatform("avatarLink", e.target.value)
-                  }
-                  defaultValue={defaultValuesPlatformUpdate.avatarLink || ""}
-                  placeholder="Enter avatar link"
-                />
-              </label>
             </>
           )}
           {type !== NotificationType.PLATFORM_UPDATE && (
@@ -171,21 +181,22 @@ export const CreateNotificationButton = () => {
                   <Text color="red">Your name is required</Text>
                 )}
               </label>
-              <label>
+              {/* Uncomment to let people choose an avatar */}
+              {/* <label>
                 <Text>Avatar link</Text>
                 <TextField.Root
                   onChange={(e) => setValueOthers("avatarLink", e.target.value)}
                   defaultValue={defaultValuesOthers.avatarLink || ""}
                   placeholder="Enter avatar link"
                 />
-              </label>
+              </label> */}
             </>
           )}
         </Flex>
 
         <Flex gap="3" mt="4" justify="end">
           <Dialog.Close>
-            <Button variant="soft" color="gray">
+            <Button variant="soft" color="gray" onClick={() => {setOpen(false); resetForms()}}>
               Cancel
             </Button>
           </Dialog.Close>
@@ -197,8 +208,9 @@ export const CreateNotificationButton = () => {
                 handleSubmitOthers(onSubmitOthers)();
               }
             }}
+            disabled={loading}
           >
-            Create
+            {loading ? <Spinner /> : "Create"}
           </Button>
         </Flex>
       </Dialog.Content>

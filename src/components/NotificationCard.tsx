@@ -1,3 +1,4 @@
+import { notificationService } from "@/services/notification.service";
 import { INotification, NotificationType } from "@/types/notification";
 import { DashboardIcon } from "@radix-ui/react-icons";
 import { Avatar, Flex, Text } from "@radix-ui/themes";
@@ -15,23 +16,27 @@ const getNotificationMessage = (notification: INotification) => {
     case NotificationType.PLATFORM_UPDATE:
       return notification.update;
     case NotificationType.COMMENT_TAG:
-      return `${notification.personName} tagged you in a comment`;
+      return <Text><b>{notification.personName}</b> tagged you in a comment</Text>;
     case NotificationType.ACCESS_GRANTED:
-      return `${notification.personName} has granted you access to a workspace`;
+      return <Text><b>{notification.personName}</b> has granted you access to a workspace</Text>;
     case NotificationType.JOIN_WORKSPACE:
-      return `${notification.personName} has invited you to join a workspace`;
+      return <Text><b>{notification.personName}</b> has invited you to join a workspace</Text>;
   }
 };
 
 export default function NotificationCard({
   notification,
+  fetchNotifications,
 }: {
   notification: INotification;
+  fetchNotifications: () => void;
 }) {
   const router = useRouter();
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    notificationService.read(notification.id);
+    fetchNotifications();
     switch (notification.type) {
       case NotificationType.ACCESS_GRANTED:
         router.push(`/chats`);
@@ -61,13 +66,13 @@ export default function NotificationCard({
           )}
           {notification.type !== NotificationType.PLATFORM_UPDATE && (
             <Avatar
-              src={notification.avatar_link || ""}
+              src={notification.avatarLink || ""}
               fallback={notification.personName?.charAt(0) || ""}
             />
           )}
-          <Text>{notification.type}</Text>
+          <Text className="font-semibold">{notification.type} {notification.type === NotificationType.PLATFORM_UPDATE && `#${notification.releaseNumber}`}</Text>
         </Flex>
-        <Text>{notification.createdAt.toLocaleDateString()}</Text>
+        <Text>{notification.createdAt.split("T")[0]}</Text>
       </Flex>
       <Text>{getNotificationMessage(notification)}</Text>
     </Flex>

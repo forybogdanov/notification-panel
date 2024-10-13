@@ -6,11 +6,12 @@ export enum NotificationType {
 }
   
 export interface INotification {
+  id: string;
   type: NotificationType;
-  avatar_link: string | null;
+  avatarLink: string | null;
   read: boolean;
   personName: string | null;
   releaseNumber: number | null;
   update: string | null;
-  createdAt: Date;
+  createdAt: string;
 }

@@ -6,42 +6,32 @@ import {
   Flex,
   Grid,
   Popover,
+  Spinner,
   Text,
 } from "@radix-ui/themes";
 import { useEffect, useState } from "react";
 import { CreateNotificationButton } from "@/components/Form";
 import NotificationCard from "@/components/NotificationCard";
-import { INotification, NotificationType } from "@/types/notification";
-
-const exampleNotifications: INotification[] = [
-  {
-    type: NotificationType.PLATFORM_UPDATE,
-    avatar_link: "",
-    read: false,
-    personName: null,
-    releaseNumber: null,
-    update: "New feature release",
-    createdAt: new Date(),
-  },
-  {
-    type: NotificationType.COMMENT_TAG,
-    avatar_link: "",
-    read: false,
-    personName: "John Doe",
-    releaseNumber: null,
-    update: null,
-    createdAt: new Date(),
-  }
-];
+import { INotification } from "@/types/notification";
+import { notificationService } from "@/services/notification.service";
 
 export default function Home() {
-  const [openNotificationsDropdown, setOpenNotificationsDropdown] =
-    useState(false);
+  const [openNotificationsDropdown, setOpenNotificationsDropdown] =useState(false);
   const [notifications, setNotifications] = useState<INotification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [openForm, setOpenForm] = useState(false);
 
   useEffect(() => {
-    setNotifications(exampleNotifications);
+    fetchNotifications();
   }, []);
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    const data = await notificationService.getAll();
+    setNotifications(data);
+    setLoading(false);
+  };
+
 
   return (
     <Grid
@@ -51,7 +41,7 @@ export default function Home() {
       <Grid className="w-full flex flex-col justify-start items-center p-4">
         <Flex direction="row" width="100%" gap="4" justify="between">
           <Text>Notifications app</Text>
-          <Popover.Root>
+          <Popover.Root onOpenChange={fetchNotifications}>
             <Popover.Trigger>
               <Button
                 onClick={() =>
@@ -64,14 +54,27 @@ export default function Home() {
             <Popover.Content width="360px">
               <Flex direction="column" gap="2">
                 <Flex direction="row" justify="between" align="center">
-                  <Text>{notifications.length} unread notifications</Text>
-                  <CreateNotificationButton />
+                  {loading && (
+                    <>
+                      <Spinner />
+                      <Text>loading notifications</Text>
+                    </>
+                  )}
+                  {!loading && notifications.length === 0 && (
+                    <Text>No unread notifications</Text>
+                  )}
+                  {!loading && notifications.length > 0 && (
+                    <Text>{notifications.length} unread notifications</Text>
+                  )}
+                  <CreateNotificationButton open={openForm} setOpen={setOpenForm} fetchNotifications={fetchNotifications} />
                 </Flex>
-                <Flex direction="column" gap="2">
-                  {notifications.map((notification, index) => (
-                    <NotificationCard key={`notification-${index}`} notification={notification} />
-                  ))}
-                </Flex>
+                {!loading && notifications.length > 0 && (
+                  <Flex direction="column" gap="2" className="max-h-[400px] overflow-y-auto">
+                    {notifications.map((notification, index) => (
+                      <NotificationCard fetchNotifications={fetchNotifications} key={`notification-${index}`} notification={notification} />
+                    ))}
+                  </Flex>
+                )}
               </Flex>
             </Popover.Content>
           </Popover.Root>
