@@ -82,6 +82,7 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
   const resetForms = () => {
     resetPlatform();
     resetOthers();
+    setType(NotificationType.PLATFORM_UPDATE);
   }
 
   const createNotification = async (data: any) => {

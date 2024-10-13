@@ -13,6 +13,10 @@ export class NotificationService {
         const response = await axios.put(`/api/notification/read/`, {id});
         return response.data;
     }
+    public async voice() {
+        const response = await axios.get("/api/notification/voice", {responseType: 'arraybuffer'});
+        return response.data;
+    }
 }
 
 export const notificationService = new NotificationService();

@@ -18,9 +18,9 @@ const getNotificationMessage = (notification: INotification) => {
     case NotificationType.COMMENT_TAG:
       return <Text><b>{notification.personName}</b> tagged you in a comment</Text>;
     case NotificationType.ACCESS_GRANTED:
-      return <Text><b>{notification.personName}</b> has granted you access to a workspace</Text>;
+      return <Text><b>{notification.personName}</b> has shared a chat with you</Text>;
     case NotificationType.JOIN_WORKSPACE:
-      return <Text><b>{notification.personName}</b> has invited you to join a workspace</Text>;
+      return <Text><b>{notification.personName}</b> has joined your workspace</Text>;
   }
 };
 

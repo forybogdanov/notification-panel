@@ -1,6 +1,6 @@
 "use client";
 
-import { BellIcon } from "@radix-ui/react-icons";
+import { BellIcon, SpeakerLoudIcon } from "@radix-ui/react-icons";
 import {
   Button,
   Flex,
@@ -15,11 +15,18 @@ import NotificationCard from "@/components/NotificationCard";
 import { INotification } from "@/types/notification";
 import { notificationService } from "@/services/notification.service";
 
+const playAudio = (audio: Buffer) => {
+  console.log(audio);
+  const audioElement = new Audio(URL.createObjectURL(new Blob([audio])));
+  audioElement.play();
+}
+
 export default function Home() {
   const [openNotificationsDropdown, setOpenNotificationsDropdown] =useState(false);
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [loading, setLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
+  const [disableSpeakButton, setDisableSpeakButton] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
@@ -31,6 +38,13 @@ export default function Home() {
     setNotifications(data);
     setLoading(false);
   };
+
+  const handleSpeachClick = async () => {
+    setDisableSpeakButton(true);
+    const data = await notificationService.voice();
+    playAudio(data);
+    setDisableSpeakButton(false);
+  }
 
 
   return (
@@ -66,7 +80,12 @@ export default function Home() {
                   {!loading && notifications.length > 0 && (
                     <Text>{notifications.length} unread notifications</Text>
                   )}
-                  <CreateNotificationButton open={openForm} setOpen={setOpenForm} fetchNotifications={fetchNotifications} />
+                  <Flex gap="2" align="center">
+                    <Button variant="ghost" size="2" onClick={handleSpeachClick} disabled={disableSpeakButton}>
+                      <SpeakerLoudIcon />
+                    </Button>
+                    <CreateNotificationButton open={openForm} setOpen={setOpenForm} fetchNotifications={fetchNotifications} />
+                  </Flex>
                 </Flex>
                 {!loading && notifications.length > 0 && (
                   <Flex direction="column" gap="2" className="max-h-[400px] overflow-y-auto">
