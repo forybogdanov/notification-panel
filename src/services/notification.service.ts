@@ -1,7 +1,10 @@
+import { INotificationCreateData } from "@/types/notification";
 import axios from "axios";
 
+
+
 export class NotificationService {
-    public async create(data: any) {
+    public async create(data: INotificationCreateData) {
         const response = await axios.post("/api/notification", data);
         return response.data;
     }

@@ -9,7 +9,7 @@ const elevenLabsClient = new ElevenLabsClient({
   apiKey: process.env.ELEVENLABS_API_KEY!,
 });
 
-export const createAudioStreamFromText = async (
+const createAudioStreamFromText = async (
   text: string
 ): Promise<Buffer> => {
   const audioStream = await elevenLabsClient.generate({
@@ -41,7 +41,7 @@ const getPrompt = (notifications: Notification[]) => {
   return promptStart + notificationText;
 };
 
-export async function GET(request: Request) {
+export async function GET() {
   const notifications = await prisma.notification.findMany({
     where: { read: false },
   });

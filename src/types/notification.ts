@@ -8,10 +8,18 @@ export enum NotificationType {
 export interface INotification {
   id: string;
   type: NotificationType;
-  avatarLink: string | null;
+  avatarLink?: string;
   read: boolean;
-  personName: string | null;
-  releaseNumber: number | null;
-  update: string | null;
+  personName?: string;
+  releaseNumber?: number;
+  update?: string;
   createdAt: string;
+}
+
+export interface INotificationCreateData {
+  type: NotificationType;
+  avatarLink?: string;
+  personName?: string;
+  releaseNumber?: number;
+  update?: string;
 }

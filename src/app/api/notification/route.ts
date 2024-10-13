@@ -5,7 +5,7 @@ import { NotificationType } from "@/types/notification";
 
 const notificationSchema = z.object({
     type: z.nativeEnum(NotificationType),
-    releaseNumber: z.string().optional().transform(Number),
+    releaseNumber: z.number().optional(),
     update: z.string().optional(),
     personName: z.string().optional(),
 }).refine(data => {
@@ -18,7 +18,7 @@ const notificationSchema = z.object({
     message: "Either releaseNumber and update should not be empty for PLATFORM_UPDATE, or personName for other types"
 });
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
     const notifications = await prisma.notification.findMany({where: {read: false}});
     return NextResponse.json(notifications);
 }

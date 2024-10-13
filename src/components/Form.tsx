@@ -13,79 +13,66 @@ import {
 } from "@radix-ui/themes";
 import { Fragment, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import { z, ZodError } from "zod";
 
-interface INotificationPlatformUpdateForm {
-  releaseNumber: string;
-  update: string;
+interface INotificationForm {
+  releaseNumber?: number;
+  personName?: string;
+  update?: string;
 }
 
-interface INotificationOthersForm {
-  avatarLink: string;
-  personName: string;
-}
-
-const defaultValuesPlatformUpdate: INotificationPlatformUpdateForm = {
-  releaseNumber: "",
-  update: "",
-};
-
-const defaultValuesOthers: INotificationOthersForm = {
-  avatarLink: "",
-  personName: "",
-};
+const notificationFormSchema = z.object({
+  releaseNumber: z.number().optional(),
+  personName: z.string().optional(),
+  update: z.string().optional(),
+}).refine((data) => {
+  return (data.releaseNumber != undefined && data.update != undefined && data.update.length > 0) || data.personName != undefined;
+}, {
+  message: "Either releaseNumber and update should not be empty for PLATFORM_UPDATE, or personName for other types",
+  path: ["releaseNumber", "update", "personName"],
+});
 
 export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {open: boolean, setOpen: (open: boolean) => void, fetchNotifications: () => void}) => {
   const {
-    reset: resetPlatform,
-    handleSubmit: handleSubmitPlatform,
-    setValue: setValuePlatform,
-    formState: { errors: errorsPlatform },
-    register: registerPlatform,
-  } = useForm<INotificationPlatformUpdateForm>({
-    defaultValues: defaultValuesPlatformUpdate,
-  });
-  const {
-    reset: resetOthers,
-    handleSubmit: handleSubmitOthers,
-    setValue: setValueOthers,
-    formState: { errors: errorsOthers },
-    register: registerOthers,
-  } = useForm<INotificationOthersForm>({ defaultValues: defaultValuesOthers });
+    reset: reset,
+    handleSubmit: handleSubmit,
+    setValue: setValue,
+    formState: { errors },
+    setError: setError,
+  } = useForm<INotificationForm>();
+
   const [type, setType] = useState<NotificationType>(
     NotificationType.PLATFORM_UPDATE,
   );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    registerPlatform("update", {
-      required: "Update is required",
-      minLength: 5,
-    });
-    registerPlatform("releaseNumber", {
-      required: "Release number is required",
-    });
-    registerOthers("personName", {
-      required: "Your name is required",
-      minLength: 2,
-    });
-  }, [registerPlatform, registerOthers]);
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
 
-  const onSubmitPlatform: SubmitHandler<INotificationPlatformUpdateForm> = async (
+  const onSubmitPlatform: SubmitHandler<INotificationForm> = async (
     data,
   ) => {
-    await createNotification({ ...data, type });
+    try {
+      const validatedData = notificationFormSchema.parse(data);
+      await createNotification(validatedData);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const errorObject = JSON.parse(error.message);
+        setError("root", { message: errorObject[0].message });
+      } else {
+        setError("root", { message: "An unknown error occurred" });
+      }
+    }
   };
-  const onSubmitOthers: SubmitHandler<INotificationOthersForm> = async (data) => {
-    await createNotification({ ...data, type });
-  }
 
   const resetForms = () => {
-    resetPlatform();
-    resetOthers();
+    reset();
     setType(NotificationType.PLATFORM_UPDATE);
   }
 
-  const createNotification = async (data: any) => {
+  const createNotification = async (data: INotificationForm) => {
     setLoading(true);
     await notificationService.create({ ...data, type });
     setLoading(false);
@@ -141,14 +128,11 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
                 <TextField.Root
                   type="number"
                   onChange={(e) =>
-                    setValuePlatform("releaseNumber", e.target.value)
-                  }
-                  defaultValue={
-                    defaultValuesPlatformUpdate.releaseNumber?.toString() || ""
-                  }
+                    setValue("releaseNumber", Number(e.target.value))
+                  }slot=""
                   placeholder="Enter release number"
                 />
-                {errorsPlatform.releaseNumber && (
+                {errors.releaseNumber && (
                   <Text color="red">Release number is required</Text>
                 )}
               </label>
@@ -157,11 +141,10 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
                   Update
                 </Text>
                 <TextField.Root
-                  onChange={(e) => setValuePlatform("update", e.target.value)}
-                  defaultValue={defaultValuesPlatformUpdate.update || ""}
+                  onChange={(e) => setValue("update", e.target.value)}
                   placeholder="Enter update"
                 />
-                {errorsPlatform.update && (
+                {errors.update && (
                   <Text color="red">Update is required</Text>
                 )}
               </label>
@@ -174,11 +157,10 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
                   Your name
                 </Text>
                 <TextField.Root
-                  onChange={(e) => setValueOthers("personName", e.target.value)}
-                  defaultValue={defaultValuesOthers.personName || ""}
+                  onChange={(e) => setValue("personName", e.target.value)}
                   placeholder="Enter your name"
                 />
-                {errorsOthers.personName && (
+                {errors.personName && (
                   <Text color="red">Your name is required</Text>
                 )}
               </label>
@@ -193,6 +175,9 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
               </label> */}
             </>
           )}
+          {errors.root && (
+            <Text color="red">{errors.root.message}</Text>
+          )}
         </Flex>
 
         <Flex gap="3" mt="4" justify="end">
@@ -202,13 +187,7 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
             </Button>
           </Dialog.Close>
           <Button
-            onClick={() => {
-              if (type === NotificationType.PLATFORM_UPDATE) {
-                handleSubmitPlatform(onSubmitPlatform)();
-              } else {
-                handleSubmitOthers(onSubmitOthers)();
-              }
-            }}
+            onClick={handleSubmit(onSubmitPlatform)}
             disabled={loading}
           >
             {loading ? <Spinner /> : "Create"}
