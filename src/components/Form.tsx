@@ -1,6 +1,6 @@
 "use client";
-import { notificationService } from "@/services/notification.service";
 import { NotificationType } from "@/types/notification";
+import { trpc } from "@/utils/trpc";
 import { PlusIcon } from "@radix-ui/react-icons";
 import {
   Flex,
@@ -32,7 +32,7 @@ const notificationFormSchema = z.object({
   path: ["releaseNumber", "update", "personName"],
 });
 
-export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {open: boolean, setOpen: (open: boolean) => void, fetchNotifications: () => void}) => {
+export const CreateNotificationButton = ({open, setOpen}: {open: boolean, setOpen: (open: boolean) => void}) => {
   const {
     reset: reset,
     handleSubmit: handleSubmit,
@@ -44,7 +44,7 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
   const [type, setType] = useState<NotificationType>(
     NotificationType.PLATFORM_UPDATE,
   );
-  const [loading, setLoading] = useState(false);
+  const {mutate: createNotification, isPending: isLoading} = trpc.createNotification.useMutation();
 
   useEffect(() => {
     reset();
@@ -56,7 +56,7 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
   ) => {
     try {
       const validatedData = notificationFormSchema.parse(data);
-      await createNotification(validatedData);
+      await handleCreateNotification(validatedData);
     } catch (error) {
       if (error instanceof ZodError) {
         const errorObject = JSON.parse(error.message);
@@ -72,12 +72,9 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
     setType(NotificationType.PLATFORM_UPDATE);
   }
 
-  const createNotification = async (data: INotificationForm) => {
-    setLoading(true);
-    await notificationService.create({ ...data, type });
-    setLoading(false);
+  const handleCreateNotification = async (data: INotificationForm) => {
+    createNotification({...data, type});
     setOpen(false);
-    fetchNotifications();
     resetForms();
   }
   
@@ -188,9 +185,9 @@ export const CreateNotificationButton = ({open, setOpen, fetchNotifications}: {o
           </Dialog.Close>
           <Button
             onClick={handleSubmit(onSubmitPlatform)}
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? <Spinner /> : "Create"}
+            {isLoading ? <Spinner /> : "Create"}
           </Button>
         </Flex>
       </Dialog.Content>

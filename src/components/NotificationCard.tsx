@@ -1,5 +1,5 @@
-import { notificationService } from "@/services/notification.service";
 import { INotification, NotificationType } from "@/types/notification";
+import { trpc } from "@/utils/trpc";
 import { DashboardIcon } from "@radix-ui/react-icons";
 import { Avatar, Flex, Text } from "@radix-ui/themes";
 import { useRouter } from "next/navigation";
@@ -26,17 +26,15 @@ const getNotificationMessage = (notification: INotification) => {
 
 export default function NotificationCard({
   notification,
-  fetchNotifications,
 }: {
   notification: INotification;
-  fetchNotifications: () => void;
 }) {
+  const { mutate: readNotification } = trpc.readNotification.useMutation();
   const router = useRouter();
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    notificationService.read(notification.id);
-    fetchNotifications();
+    readNotification({ id: notification.id });
     switch (notification.type) {
       case NotificationType.ACCESS_GRANTED:
         router.push(`/chats`);
@@ -72,7 +70,7 @@ export default function NotificationCard({
           )}
           <Text className="font-semibold">{notification.type} {notification.type === NotificationType.PLATFORM_UPDATE && `#${notification.releaseNumber}`}</Text>
         </Flex>
-        <Text>{notification.createdAt.split("T")[0]}</Text>
+        <Text>{notification.createdAt.toLocaleDateString()}</Text>
       </Flex>
       <Text>{getNotificationMessage(notification)}</Text>
     </Flex>

@@ -13,7 +13,7 @@ export interface INotification {
   personName?: string;
   releaseNumber?: number;
   update?: string;
-  createdAt: string;
+  createdAt: Date;
 }
 
 export interface INotificationCreateData {

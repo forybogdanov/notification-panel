@@ -12,34 +12,32 @@ import {
 import { useEffect, useState } from "react";
 import { CreateNotificationButton } from "@/components/Form";
 import NotificationCard from "@/components/NotificationCard";
-import { INotification } from "@/types/notification";
 import { notificationService } from "@/services/notification.service";
+import { trpc } from "@/utils/trpc";
 
 const playAudio = (audio: Buffer) => {
-  console.log(audio);
   const audioElement = new Audio(URL.createObjectURL(new Blob([audio])));
   audioElement.play();
 }
 
 export default function Home() {
-  const [openNotificationsDropdown, setOpenNotificationsDropdown] =useState(false);
-  const [notifications, setNotifications] = useState<INotification[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [openNotificationsDropdown, setOpenNotificationsDropdown] = useState(false);
   const [openForm, setOpenForm] = useState(false);
   const [disableSpeakButton, setDisableSpeakButton] = useState(false);
+  const { data: notifications, isFetching: isLoading, refetch } = trpc.getNotifications.useQuery();
 
   useEffect(() => {
     fetchNotifications();
   }, []);
 
   const fetchNotifications = async () => {
-    setLoading(true);
-    const data = await notificationService.getAll();
-    setNotifications(data);
-    setLoading(false);
+    const interval = setInterval(() => {
+      refetch();
+    }, 1000);
+    return () => clearInterval(interval);
   };
 
-  const handleSpeachClick = async () => {
+  const handleSpeechClick = async () => {
     setDisableSpeakButton(true);
     const data = await notificationService.voice();
     playAudio(data);
@@ -55,7 +53,7 @@ export default function Home() {
       <Grid className="w-full flex flex-col justify-start items-center p-4">
         <Flex direction="row" width="100%" gap="4" justify="between">
           <Text>Notifications app</Text>
-          <Popover.Root onOpenChange={fetchNotifications}>
+          <Popover.Root>
             <Popover.Trigger>
               <Button
                 onClick={() =>
@@ -68,29 +66,29 @@ export default function Home() {
             <Popover.Content width="360px">
               <Flex direction="column" gap="2">
                 <Flex direction="row" justify="between" align="center">
-                  {loading && (
+                  {isLoading && !notifications && (
                     <>
                       <Spinner />
                       <Text>loading notifications</Text>
                     </>
                   )}
-                  {!loading && notifications.length === 0 && (
+                  {!isLoading && notifications && notifications?.length === 0 && (
                     <Text>No unread notifications</Text>
                   )}
-                  {!loading && notifications.length > 0 && (
-                    <Text>{notifications.length} unread notifications</Text>
+                  {notifications && notifications?.length > 0 && (
+                    <Text>{notifications?.length} unread notifications</Text>
                   )}
                   <Flex gap="2" align="center">
-                    <Button variant="ghost" size="2" onClick={handleSpeachClick} disabled={disableSpeakButton}>
+                    <Button variant="ghost" size="2" onClick={handleSpeechClick} disabled={disableSpeakButton}>
                       <SpeakerLoudIcon />
                     </Button>
-                    <CreateNotificationButton open={openForm} setOpen={setOpenForm} fetchNotifications={fetchNotifications} />
+                    <CreateNotificationButton open={openForm} setOpen={setOpenForm} />
                   </Flex>
                 </Flex>
-                {!loading && notifications.length > 0 && (
+                {notifications && notifications?.length > 0 && (
                   <Flex direction="column" gap="2" className="max-h-[400px] overflow-y-auto">
                     {notifications.map((notification, index) => (
-                      <NotificationCard fetchNotifications={fetchNotifications} key={`notification-${index}`} notification={notification} />
+                      <NotificationCard key={`notification-${index}`} notification={notification} />
                     ))}
                   </Flex>
                 )}

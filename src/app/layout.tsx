@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
 import "./globals.css";
+import TrpcProvider from "@/components/TrcpProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,9 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Theme>
-          {children}
-        </Theme>
+        <TrpcProvider>
+          <Theme>
+            {children}
+          </Theme>
+        </TrpcProvider>
       </body>
     </html>
   );
