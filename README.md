@@ -1,4 +1,5 @@
 # Notification Panel
+Built this to explore different technologies
 
 A modern, full-stack notification system built with Next.js, React, and TypeScript.
 
